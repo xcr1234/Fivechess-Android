@@ -10,7 +10,10 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -21,7 +24,10 @@ import cn.edu.hubu.fivechess.game.IChessboard;
 import cn.edu.hubu.fivechess.game.IPlayer;
 import cn.edu.hubu.fivechess.game.Point;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 
 public class ChessView extends View {
@@ -279,4 +285,51 @@ public class ChessView extends View {
         }
     }
 
+    private static final String instance = "INSTANCE";
+    private static final String win = "ISWIN";
+    private static final String black = "ISBLACK";
+    private static final String human = "HUMAN";
+    private static final String ai = "AI";
+
+    //view的存储与恢复
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        Log.d("ChessView","保存棋局");
+        bundle.putParcelable(instance,super.onSaveInstanceState());
+        bundle.putBoolean(win,isWin);
+        bundle.putBoolean(black,isBlack);
+        bundle.putSerializable(human, (Serializable) humanPlayer.getMyPoints());
+        bundle.putSerializable(ai, (Serializable) aiPlayer.getMyPoints());
+        return bundle;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        if(state instanceof Bundle){
+            Log.d("ChessView","加载棋局");
+            Bundle bundle = (Bundle)state;
+            isWin = bundle.getBoolean(win);
+            isBlack = bundle.getBoolean(black);
+            chessboard = new ChessBoard(MAX_LINE);
+            humanPlayer = new HumanPlayer();
+            humanPlayer.setChessboard(chessboard);
+            aiPlayer = new BaseComputerAi();
+            aiPlayer.setChessboard(chessboard);
+            List<Point> humanPoints = (List<Point>) bundle.getSerializable(human);
+            List<Point> aiPoints = (List<Point>) bundle.getSerializable(ai);
+            humanPlayer.getMyPoints().addAll(humanPoints);
+            aiPlayer.getMyPoints().addAll(aiPoints);
+            for(Point point:humanPoints){
+                chessboard.getFreePoints().remove(point);
+            }
+            for(Point point:aiPoints){
+                chessboard.getFreePoints().remove(point);
+            }
+            super.onRestoreInstanceState(bundle.getParcelable(instance));
+            return;
+        }
+        super.onRestoreInstanceState(state);
+    }
 }

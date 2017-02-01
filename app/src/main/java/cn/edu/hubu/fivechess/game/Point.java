@@ -1,6 +1,5 @@
 package cn.edu.hubu.fivechess.game;
 
-
 import java.io.Serializable;
 
 public class Point implements Serializable{
